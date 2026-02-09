@@ -11,14 +11,43 @@ import logging
 import os
 import signal
 import sys
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 import uvicorn
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+# 创建 logs 目录（如果不存在）
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
+
+# 配置日志格式
+log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+date_format = "%Y-%m-%d %H:%M:%S"
+
+# 配置根日志记录器
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+# 清除现有的处理器
+root_logger.handlers.clear()
+
+# 添加控制台处理器
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter(log_format, date_format))
+root_logger.addHandler(console_handler)
+
+# 添加文件处理器（使用轮转日志，避免文件过大）
+log_file = log_dir / "academic-agent.log"
+file_handler = RotatingFileHandler(
+    log_file,
+    maxBytes=10 * 1024 * 1024,  # 10MB
+    backupCount=5,  # 保留5个备份文件
+    encoding="utf-8"
 )
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter(log_format, date_format))
+root_logger.addHandler(file_handler)
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +100,12 @@ if __name__ == "__main__":
         choices=["debug", "info", "warning", "error", "critical"],
         help="Log level (default: info)",
     )
+    parser.add_argument(
+        "--log-file",
+        type=str,
+        default=None,
+        help="Path to log file (default: logs/deerflow.log). Set to empty string to disable file logging.",
+    )
 
     args = parser.parse_args()
 
@@ -85,9 +120,48 @@ if __name__ == "__main__":
     else:
         log_level = args.log_level
 
+    # 配置日志文件路径（如果指定）
+    if args.log_file is not None:
+        if args.log_file == "":
+            # 禁用文件日志
+            for handler in root_logger.handlers[:]:
+                if isinstance(handler, RotatingFileHandler):
+                    root_logger.removeHandler(handler)
+                    handler.close()
+        else:
+            # 使用指定的日志文件
+            custom_log_file = Path(args.log_file)
+            custom_log_file.parent.mkdir(parents=True, exist_ok=True)
+            # 移除旧的文件处理器
+            for handler in root_logger.handlers[:]:
+                if isinstance(handler, RotatingFileHandler):
+                    root_logger.removeHandler(handler)
+                    handler.close()
+            # 添加新的文件处理器
+            custom_file_handler = RotatingFileHandler(
+                custom_log_file,
+                maxBytes=10 * 1024 * 1024,
+                backupCount=5,
+                encoding="utf-8"
+            )
+            custom_file_handler.setLevel(logging.INFO)
+            custom_file_handler.setFormatter(logging.Formatter(log_format, date_format))
+            root_logger.addHandler(custom_file_handler)
+
     try:
         logger.info(f"Starting DeerFlow API server on {args.host}:{args.port}")
         logger.info(f"Log level: {log_level.upper()}")
+        # 显示日志文件位置
+        file_handlers = [h for h in root_logger.handlers if isinstance(h, RotatingFileHandler)]
+        if file_handlers:
+            logger.info(f"Log file: {file_handlers[0].baseFilename}")
+        
+        # 设置日志级别
+        numeric_level = getattr(logging, log_level.upper(), logging.INFO)
+        root_logger.setLevel(numeric_level)
+        # 更新所有处理器的日志级别
+        for handler in root_logger.handlers:
+            handler.setLevel(numeric_level)
         
         # Set the appropriate logging level for the src package if debug is enabled
         if log_level.lower() == "debug":

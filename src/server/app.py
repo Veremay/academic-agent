@@ -186,8 +186,10 @@ async def lifespan(app):
                 )
 
                 # Create the MongoDB checkpointer using the global client
+                # Note: AsyncMongoDBSaver doesn't require explicit setup() call in newer versions
                 _mongo_checkpointer = AsyncMongoDBSaver(_mongo_client)
-                await _mongo_checkpointer.setup()
+                # Test the connection by accessing the database
+                await _mongo_client.admin.command("ping")
 
                 logger.info("Global MongoDB connection pool initialized successfully")
             except ImportError:

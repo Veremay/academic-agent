@@ -1,0 +1,71 @@
+2026-01-26 20:33:59 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-01-26 20:34:05 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-01-26 20:34:05 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-01-26 20:34:05 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-01-26 20:34:05 - src.server.app - INFO - Global MongoDB connection pool initialized successfully
+2026-01-26 20:36:10 - src.server.app - INFO - Closing global MongoDB connection
+2026-01-26 20:36:10 - src.server.app - INFO - Global MongoDB connection closed
+2026-01-26 20:36:10 - __mp_main__ - INFO - Received shutdown signal. Starting graceful shutdown...
+2026-02-09 16:10:04 - __main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 16:10:04 - __main__ - INFO - Starting DeerFlow API server on localhost:8000
+2026-02-09 16:10:04 - __main__ - INFO - Log level: INFO
+2026-02-09 16:10:04 - __main__ - INFO - Log file: E:\amaymay\lernen\LLM\multi-agents-project\academic-agent\logs\academic-agent.log
+2026-02-09 16:10:04 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 16:10:24 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-02-09 16:10:24 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-02-09 16:10:24 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-02-09 16:10:24 - src.server.app - INFO - Global MongoDB connection pool initialized successfully
+2026-02-09 16:46:13 - __main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 16:46:13 - __main__ - INFO - Starting DeerFlow API server on localhost:8000
+2026-02-09 16:46:13 - __main__ - INFO - Log level: INFO
+2026-02-09 16:46:13 - __main__ - INFO - Log file: E:\amaymay\lernen\LLM\multi-agents-project\academic-agent\logs\academic-agent.log
+2026-02-09 16:46:13 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 16:46:16 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-02-09 16:46:16 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-02-09 16:46:16 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-02-09 16:46:16 - src.server.app - INFO - Global MongoDB connection pool initialized successfully
+2026-02-09 16:47:21 - src.server.app - INFO - Closing global MongoDB connection
+2026-02-09 16:47:21 - src.server.app - INFO - Global MongoDB connection closed
+2026-02-09 16:47:21 - __mp_main__ - INFO - Received shutdown signal. Starting graceful shutdown...
+2026-02-09 16:54:34 - __main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 16:54:34 - __main__ - INFO - Starting DeerFlow API server on localhost:8000
+2026-02-09 16:54:34 - __main__ - INFO - Log level: INFO
+2026-02-09 16:54:34 - __main__ - INFO - Log file: E:\amaymay\lernen\LLM\multi-agents-project\academic-agent\logs\academic-agent.log
+2026-02-09 16:54:34 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 16:54:37 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-02-09 16:54:37 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-02-09 16:54:37 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-02-09 16:54:37 - src.server.app - INFO - Global MongoDB connection pool initialized successfully
+2026-02-09 17:09:40 - __main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 17:09:41 - __main__ - INFO - Starting DeerFlow API server on localhost:8000
+2026-02-09 17:09:41 - __main__ - INFO - Log level: INFO
+2026-02-09 17:09:41 - __main__ - INFO - Log file: E:\amaymay\lernen\LLM\multi-agents-project\academic-agent\logs\academic-agent.log
+2026-02-09 17:09:41 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 17:09:44 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-02-09 17:09:44 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-02-09 17:09:44 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-02-09 17:09:44 - src.server.app - INFO - Global MongoDB connection pool initialized successfully
+2026-02-09 17:10:20 - src.server.app - INFO - Closing global MongoDB connection
+2026-02-09 17:10:20 - src.server.app - INFO - Global MongoDB connection closed
+2026-02-09 17:10:20 - __mp_main__ - INFO - Received shutdown signal. Starting graceful shutdown...
+2026-02-09 17:10:22 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 17:10:25 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-02-09 17:10:25 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-02-09 17:10:25 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-02-09 17:10:25 - src.server.app - INFO - Global MongoDB connection pool initialized successfully
+2026-02-09 17:10:55 - src.server.app - INFO - Closing global MongoDB connection
+2026-02-09 17:10:55 - src.server.app - INFO - Global MongoDB connection closed
+2026-02-09 17:10:55 - __mp_main__ - INFO - Received shutdown signal. Starting graceful shutdown...
+2026-02-09 17:11:12 - __main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 17:11:12 - __main__ - INFO - Starting DeerFlow API server on localhost:8000
+2026-02-09 17:11:12 - __main__ - INFO - Log level: INFO
+2026-02-09 17:11:12 - __main__ - INFO - Log file: E:\amaymay\lernen\LLM\multi-agents-project\academic-agent\logs\academic-agent.log
+2026-02-09 17:11:12 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 17:11:15 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-02-09 17:11:15 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-02-09 17:11:15 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-02-09 17:11:15 - src.server.app - INFO - Global MongoDB connection pool initialized successfully
+2026-02-09 17:16:12 - src.server.app - INFO - Closing global MongoDB connection
+2026-02-09 17:16:12 - src.server.app - INFO - Global MongoDB connection closed
+2026-02-09 17:16:12 - __mp_main__ - INFO - Received shutdown signal. Starting graceful shutdown...
+2026-02-09 17:16:13 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
