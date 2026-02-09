@@ -69,3 +69,15 @@
 2026-02-09 17:16:12 - src.server.app - INFO - Global MongoDB connection closed
 2026-02-09 17:16:12 - __mp_main__ - INFO - Received shutdown signal. Starting graceful shutdown...
 2026-02-09 17:16:13 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 17:16:16 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-02-09 17:16:16 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-02-09 17:16:16 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-02-09 17:16:16 - src.server.app - INFO - Global MongoDB connection pool initialized successfully
+2026-02-09 17:21:12 - src.server.app - INFO - Closing global MongoDB connection
+2026-02-09 17:21:12 - src.server.app - INFO - Global MongoDB connection closed
+2026-02-09 17:21:12 - __mp_main__ - INFO - Received shutdown signal. Starting graceful shutdown...
+2026-02-09 17:21:13 - __mp_main__ - INFO - Setting Windows event loop policy for asyncio
+2026-02-09 17:21:16 - src.graph.checkpoint - INFO - Successfully connected to MongoDB
+2026-02-09 17:21:16 - src.server.app - INFO - Allowed origins: ['http://localhost:3000']
+2026-02-09 17:21:16 - src.server.app - INFO - Initializing global MongoDB connection pool: min_pool_size=5, max_pool_size=20
+2026-02-09 17:21:16 - src.server.app - INFO - Global MongoDB connection pool initialized successfully

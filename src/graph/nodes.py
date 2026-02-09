@@ -7,10 +7,11 @@ import os
 from functools import partial
 from typing import Annotated, Any, Literal
 
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.errors import GraphRecursionError
 from langgraph.types import Command, interrupt
 
 from src.agents import create_agent
@@ -19,7 +20,7 @@ from src.config.agents import AGENT_LLM_MAP
 from src.config.configuration import Configuration
 from src.llms.llm import get_llm_by_type, get_llm_token_limit_by_type
 from src.prompts.planner_model import Plan
-from src.prompts.template import apply_prompt_template
+from src.prompts.template import apply_prompt_template, get_system_prompt_template
 from src.tools import (
     crawl_tool,
     get_retriever_tool,
@@ -331,9 +332,12 @@ def planner_node(
     logger.debug(f"Current state messages: {state['messages']}")
     logger.info(f"Planner response: {full_response}")
 
+    # Clean the response first to handle markdown code blocks (```json, ```ts, etc.)
+    cleaned_response = repair_json_output(full_response)
+
     # Validate explicitly that response content is valid JSON before proceeding to parse it
-    if not full_response.strip().startswith('{') and not full_response.strip().startswith('['):
-        logger.warning("Planner response does not appear to be valid JSON")
+    if not cleaned_response.strip().startswith('{') and not cleaned_response.strip().startswith('['):
+        logger.warning("Planner response does not appear to be valid JSON after cleanup")
         if plan_iterations > 0:
             return Command(
                 update=preserve_state_meta_fields(state),
@@ -346,7 +350,7 @@ def planner_node(
             )
 
     try:
-        curr_plan = json.loads(repair_json_output(full_response))
+        curr_plan = json.loads(cleaned_response)
         # Need to extract the plan from the full_response
         curr_plan_content = extract_plan_content(curr_plan)
         # load the current_plan
@@ -417,6 +421,26 @@ def extract_plan_content(plan_data: str | dict | Any) -> str:
             if isinstance(plan_data["content"], dict):
                 logger.debug("Converting content field dict to JSON string")
                 return json.dumps(plan_data["content"], ensure_ascii=False)
+            if isinstance(plan_data["content"], list):
+                # Handle multimodal message format where content is a list
+                # Extract text content from the list structure
+                logger.debug(f"Extracting plan content from multimodal list format with {len(plan_data['content'])} elements")
+                for item in plan_data["content"]:
+                    if isinstance(item, str) and item.strip():
+                        # Return the first valid text content found
+                        # We only take the first one because plan content should be a single JSON object
+                        # Joining multiple text parts with newlines would produce invalid JSON
+                        return item
+                    elif isinstance(item, dict):
+                        # Handle content block format like {"type": "text", "text": "..."}
+                        if item.get("type") == "text" and "text" in item:
+                            return item["text"]
+                        elif "content" in item and isinstance(item["content"], str):
+                            return item["content"]
+                # No valid text content found - raise ValueError to trigger error handling
+                # Do NOT use json.dumps() here as it would produce a JSON array that causes
+                # Plan.model_validate() to fail with ValidationError (issue #845)
+                raise ValueError(f"No valid text content found in multimodal list: {plan_data['content']}")
             else:
                 logger.warning(f"Unexpected type for 'content' field in plan_data dict: {type(plan_data['content']).__name__}, converting to string")
                 return str(plan_data["content"])
@@ -490,7 +514,7 @@ def human_feedback_node(
         # Validate and fix plan to ensure web search requirements are met
         configurable = Configuration.from_runnable_config(config)
         new_plan = validate_and_fix_plan(new_plan, configurable.enforce_web_search, configurable.enable_web_search)
-    except (json.JSONDecodeError, AttributeError) as e:
+    except (json.JSONDecodeError, AttributeError, ValueError) as e:
         logger.warning(f"Failed to parse plan: {str(e)}. Plan data type: {type(current_plan).__name__}")
         if isinstance(current_plan, dict) and "content" in original_plan:
             logger.warning(f"Plan appears to be an AIMessage object with content field")
@@ -929,6 +953,79 @@ def validate_web_search_usage(messages: list, agent_name: str = "agent") -> bool
     return web_search_used
 
 
+async def _handle_recursion_limit_fallback(
+    messages: list,
+    agent_name: str,
+    current_step,
+    state: State,
+) -> list:
+    """Handle GraphRecursionError with graceful fallback using LLM summary.
+
+    When the agent hits the recursion limit, this function generates a final output
+    using only the observations already gathered, without calling any tools.
+
+    Args:
+        messages: Messages accumulated during agent execution before hitting limit
+        agent_name: Name of the agent that hit the limit
+        current_step: The current step being executed
+        state: Current workflow state
+
+    Returns:
+        list: Messages including the accumulated messages plus the fallback summary
+
+    Raises:
+        Exception: If the fallback LLM call fails
+    """
+    logger.warning(
+        f"Recursion limit reached for {agent_name} agent. "
+        f"Attempting graceful fallback with {len(messages)} accumulated messages."
+    )
+
+    if len(messages) == 0:
+        return messages
+
+    cleared_messages = messages.copy()
+    while len(cleared_messages) > 0 and cleared_messages[-1].type == "system":
+        cleared_messages = cleared_messages[:-1]
+
+    # Prepare state for prompt template
+    fallback_state = {
+        "locale": state.get("locale", "en-US"),
+    }
+
+    # Apply the recursion_fallback prompt template
+    system_prompt = get_system_prompt_template(agent_name, fallback_state, None, fallback_state.get("locale", "en-US"))
+    limit_prompt = get_system_prompt_template("recursion_fallback", fallback_state, None, fallback_state.get("locale", "en-US"))
+    fallback_messages = cleared_messages + [
+        SystemMessage(content=system_prompt),
+        SystemMessage(content=limit_prompt)
+    ]
+
+    # Get the LLM without tools (strip all tools from binding)
+    fallback_llm = get_llm_by_type(AGENT_LLM_MAP[agent_name])
+
+    # Call the LLM with the updated messages
+    fallback_response = fallback_llm.invoke(fallback_messages)
+    fallback_content = fallback_response.content
+
+    logger.info(
+        f"Graceful fallback succeeded for {agent_name} agent. "
+        f"Generated summary of {len(fallback_content)} characters."
+    )
+
+    # Sanitize response
+    fallback_content = sanitize_tool_response(str(fallback_content))
+
+    # Update the step with the fallback result
+    current_step.execution_res = fallback_content
+
+    # Return the accumulated messages plus the fallback response
+    result_messages = list(cleared_messages)
+    result_messages.append(AIMessage(content=fallback_content, name=agent_name))
+
+    return result_messages
+
+
 async def _execute_agent_step(
     state: State, agent, agent_name: str, config: RunnableConfig = None
 ) -> Command[Literal["research_team"]]:
@@ -1049,11 +1146,52 @@ async def _execute_agent_step(
             f"Context compression for {agent_name}: {len(compressed_state.get('messages', []))} messages, "
             f"estimated tokens before: ~{token_count_before}, after: ~{token_count_after}"
         )
-    
+
     try:
-        result = await agent.ainvoke(
-            input=agent_input, config={"recursion_limit": recursion_limit}
-        )
+        # Use astream (async) from the start to capture messages in real-time
+        # This allows us to retrieve accumulated messages even if recursion limit is hit
+        # NOTE: astream is required for MCP tools which only support async invocation
+        accumulated_messages = []
+        async for chunk in agent.astream(
+            input=agent_input,
+            config={"recursion_limit": recursion_limit},
+            stream_mode="values",
+        ):
+            if isinstance(chunk, dict) and "messages" in chunk:
+                accumulated_messages = chunk["messages"]
+
+        # If we get here, execution completed successfully
+        result = {"messages": accumulated_messages}
+    except GraphRecursionError:
+        # Check if recursion fallback is enabled
+        configurable = Configuration.from_runnable_config(config) if config else Configuration()
+
+        if configurable.enable_recursion_fallback:
+            try:
+                # Call fallback with accumulated messages (function returns list of messages)
+                response_messages = await _handle_recursion_limit_fallback(
+                    messages=accumulated_messages,
+                    agent_name=agent_name,
+                    current_step=current_step,
+                    state=state,
+                )
+
+                # Create result dict so the code can continue normally from line 1178
+                result = {"messages": response_messages}
+            except Exception as fallback_error:
+                # If fallback fails, log and fall through to standard error handling
+                logger.error(
+                    f"Recursion fallback failed for {agent_name} agent: {fallback_error}. "
+                    "Falling back to standard error handling."
+                )
+                raise
+        else:
+            # Fallback disabled, let error propagate to standard handler
+            logger.info(
+                f"Recursion limit reached but graceful fallback is disabled. "
+                "Using standard error handling."
+            )
+            raise
     except Exception as e:
         import traceback
 
@@ -1088,8 +1226,10 @@ async def _execute_agent_step(
             goto="research_team",
         )
 
+    response_messages = result["messages"]
+
     # Process the result
-    response_content = result["messages"][-1].content
+    response_content = response_messages[-1].content
     
     # Sanitize response to remove extra tokens and truncate if needed
     response_content = sanitize_tool_response(str(response_content))
